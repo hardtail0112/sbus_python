@@ -31,6 +31,7 @@ int sbus_write_channels[8];
 struct itimerval timer;
 
 void sbus_hander();
+int getRxBuf(int fd);
 
 
 // timer init
@@ -156,8 +157,12 @@ void sbus_hander(){
     int i,j;
     int len;                            //  受信データ数（バイト）
     
+
+    // 例外処理
+
     // ここで受信待ち
-    len=read(gfd,buffer,BUFF_SIZE);
+    //len=read(gfd,buffer,BUFF_SIZE);
+    len=read(gfd,buffer,getRxBuf(gfd));
     if(len==0){
         // read()が0を返したら、end of file
         // 通常は正常終了するのだが今回は無限ループ
@@ -212,28 +217,29 @@ void sbus_hander(){
     }
 
     //write sequence
-    
-    write_sbus_buffer[0] = 0x0f;
+    if(len != 0){
+        write_sbus_buffer[0] = 0x0f;
 
-    write_sbus_buffer[ 1] =   sbus_write_channels[0] & 0b00011111111;
-    write_sbus_buffer[ 2] = ((sbus_write_channels[1] & 0b00000011111)<<3) | ((sbus_write_channels[0] & 0b11100000000)>>8);
-    write_sbus_buffer[ 3] = ((sbus_write_channels[2] & 0b00000000011)<<6) | ((sbus_write_channels[1] & 0b11111100000)>>5);
-    write_sbus_buffer[ 4] = ((sbus_write_channels[2] & 0b01111111100)>>2);
-    write_sbus_buffer[ 5] = ((sbus_write_channels[3] & 0b00001111111)<<1) | ((sbus_write_channels[2] & 0b10000000000)>>10);
-    write_sbus_buffer[ 6] = ((sbus_write_channels[4] & 0b00000000111)<<4) | ((sbus_write_channels[3] & 0b11110000000)>>7);
-    write_sbus_buffer[ 7] = ((sbus_write_channels[4] & 0b11111111000)>>3);
-    write_sbus_buffer[ 8] =   sbus_write_channels[5] & 0b00011111111;
-    write_sbus_buffer[ 9] = ((sbus_write_channels[6] & 0b00000011111)<<3) | ((sbus_write_channels[5] & 0b11100000000)>>8);
-    write_sbus_buffer[10] = ((sbus_write_channels[7] & 0b00000000011)<<6) | ((sbus_write_channels[6] & 0b11111100000)>>5);
-    write_sbus_buffer[11] = ((sbus_write_channels[7] & 0b01111111100)>>2);
+        write_sbus_buffer[ 1] =   sbus_write_channels[0] & 0b00011111111;
+        write_sbus_buffer[ 2] = ((sbus_write_channels[1] & 0b00000011111)<<3) | ((sbus_write_channels[0] & 0b11100000000)>>8);
+        write_sbus_buffer[ 3] = ((sbus_write_channels[2] & 0b00000000011)<<6) | ((sbus_write_channels[1] & 0b11111100000)>>5);
+        write_sbus_buffer[ 4] = ((sbus_write_channels[2] & 0b01111111100)>>2);
+        write_sbus_buffer[ 5] = ((sbus_write_channels[3] & 0b00001111111)<<1) | ((sbus_write_channels[2] & 0b10000000000)>>10);
+        write_sbus_buffer[ 6] = ((sbus_write_channels[4] & 0b00000000111)<<4) | ((sbus_write_channels[3] & 0b11110000000)>>7);
+        write_sbus_buffer[ 7] = ((sbus_write_channels[4] & 0b11111111000)>>3);
+        write_sbus_buffer[ 8] =   sbus_write_channels[5] & 0b00011111111;
+        write_sbus_buffer[ 9] = ((sbus_write_channels[6] & 0b00000011111)<<3) | ((sbus_write_channels[5] & 0b11100000000)>>8);
+        write_sbus_buffer[10] = ((sbus_write_channels[7] & 0b00000000011)<<6) | ((sbus_write_channels[6] & 0b11111100000)>>5);
+        write_sbus_buffer[11] = ((sbus_write_channels[7] & 0b01111111100)>>2);
 
 
-    for(i=12; i<=26; i++){
-        write_sbus_buffer[i] = sbus_buffer[i];
+        for(i=12; i<=26; i++){
+            write_sbus_buffer[i] = sbus_buffer[i];
+        }
+
+        write(gfd, write_sbus_buffer, 25);
+        //return sbus_channels;        
     }
-
-    write(gfd, write_sbus_buffer, 25);
-    //return sbus_channels;        
 }
 
 void read_sbus(int *b){
@@ -264,6 +270,13 @@ void write_sbus(int *b){
     for(i=0;i<8;i++){
         sbus_write_channels[i] = b[i];
     }
+}
+
+int getRxBuf(int fd){
+	int ready;
+	//fcntl(fd,F_SETFL, FNDELAY);
+	ioctl(fd, FIONREAD, &ready);
+	return ready;
 }
 
 
