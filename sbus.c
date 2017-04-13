@@ -217,29 +217,27 @@ void sbus_hander(){
     }
 
     //write sequence
-    if(len != 0){
-        write_sbus_buffer[0] = 0x0f;
+    write_sbus_buffer[0] = 0x0f;
 
-        write_sbus_buffer[ 1] =   sbus_write_channels[0] & 0b00011111111;
-        write_sbus_buffer[ 2] = ((sbus_write_channels[1] & 0b00000011111)<<3) | ((sbus_write_channels[0] & 0b11100000000)>>8);
-        write_sbus_buffer[ 3] = ((sbus_write_channels[2] & 0b00000000011)<<6) | ((sbus_write_channels[1] & 0b11111100000)>>5);
-        write_sbus_buffer[ 4] = ((sbus_write_channels[2] & 0b01111111100)>>2);
-        write_sbus_buffer[ 5] = ((sbus_write_channels[3] & 0b00001111111)<<1) | ((sbus_write_channels[2] & 0b10000000000)>>10);
-        write_sbus_buffer[ 6] = ((sbus_write_channels[4] & 0b00000000111)<<4) | ((sbus_write_channels[3] & 0b11110000000)>>7);
-        write_sbus_buffer[ 7] = ((sbus_write_channels[4] & 0b11111111000)>>3);
-        write_sbus_buffer[ 8] =   sbus_write_channels[5] & 0b00011111111;
-        write_sbus_buffer[ 9] = ((sbus_write_channels[6] & 0b00000011111)<<3) | ((sbus_write_channels[5] & 0b11100000000)>>8);
-        write_sbus_buffer[10] = ((sbus_write_channels[7] & 0b00000000011)<<6) | ((sbus_write_channels[6] & 0b11111100000)>>5);
-        write_sbus_buffer[11] = ((sbus_write_channels[7] & 0b01111111100)>>2);
+    write_sbus_buffer[ 1] =   sbus_write_channels[0] & 0b00011111111;
+    write_sbus_buffer[ 2] = ((sbus_write_channels[1] & 0b00000011111)<<3) | ((sbus_write_channels[0] & 0b11100000000)>>8);
+    write_sbus_buffer[ 3] = ((sbus_write_channels[2] & 0b00000000011)<<6) | ((sbus_write_channels[1] & 0b11111100000)>>5);
+    write_sbus_buffer[ 4] = ((sbus_write_channels[2] & 0b01111111100)>>2);
+    write_sbus_buffer[ 5] = ((sbus_write_channels[3] & 0b00001111111)<<1) | ((sbus_write_channels[2] & 0b10000000000)>>10);
+    write_sbus_buffer[ 6] = ((sbus_write_channels[4] & 0b00000000111)<<4) | ((sbus_write_channels[3] & 0b11110000000)>>7);
+    write_sbus_buffer[ 7] = ((sbus_write_channels[4] & 0b11111111000)>>3);
+    write_sbus_buffer[ 8] =   sbus_write_channels[5] & 0b00011111111;
+    write_sbus_buffer[ 9] = ((sbus_write_channels[6] & 0b00000011111)<<3) | ((sbus_write_channels[5] & 0b11100000000)>>8);
+    write_sbus_buffer[10] = ((sbus_write_channels[7] & 0b00000000011)<<6) | ((sbus_write_channels[6] & 0b11111100000)>>5);
+    write_sbus_buffer[11] = ((sbus_write_channels[7] & 0b01111111100)>>2);
 
 
-        for(i=12; i<=26; i++){
-            write_sbus_buffer[i] = sbus_buffer[i];
-        }
-
-        write(gfd, write_sbus_buffer, 25);
-        //return sbus_channels;        
+    for(i=12; i<=26; i++){
+        write_sbus_buffer[i] = sbus_buffer[i];
     }
+
+    write(gfd, write_sbus_buffer, 25);
+    //return sbus_channels;
 }
 
 void read_sbus(int *b){
