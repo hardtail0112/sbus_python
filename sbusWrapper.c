@@ -50,7 +50,7 @@ PyObject* sbus_serial_close(PyObject* self, PyObject* args){
 
 
 PyObject* sbus_write(PyObject* self, PyObject* args){
-  const MAX_BIT_LENGTH = 8;
+  const int MAX_BIT_LENGTH = 8;
   unsigned int num;
   unsigned int mask;
   int m,n,i,len;
