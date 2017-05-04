@@ -19,13 +19,14 @@ int start_byte_flag;
 int sbus_bffer_cnt;
 int sbus_bit_cnt;
 int sbus_byte_cnt;
-unsigned char sbus_buffer[24];
+unsigned char sbus_buffer[25];
 int sbus_channels[8];
 int gfd;
 
 //write
-unsigned char write_sbus_buffer[24];
-int sbus_write_channels[8];
+char write_sbus_buffer[25] = {0x0f,0xce,0x08,0x9f,0xf7,0xce,0xa7,0x0c,0x65,0x28,0x43,0x19,0x00,0x04,0x20,0x00,0x01,0x08,0x40,0x00,0x02,0x10,0x80,0x00,0x00};
+//char write_sbus_buffer[25];
+int sbus_write_channels[8] = {500,500,500,500,500,500,500,500};
 
 
 struct itimerval timer;
@@ -83,8 +84,9 @@ void serial_init()
 
     struct termios2 tio;
     memset(&tio,0,sizeof(tio));
-    tio.c_cflag = CS8 | CLOCAL | CREAD | CSTOPB | PARODD| PARENB;
-    tio.c_cc[VTIME] = 100;
+    //tio.c_cflag = CS8 | CLOCAL | CREAD | CSTOPB | PARODD| PARENB;
+    tio.c_cflag = CS8 | CLOCAL | CREAD |CSTOPB  | PARENB ;
+    //tio.c_cc[VTIME] = 100;
     // ボーレートの設定
     //cfsetispeed(&tio,BAUD_RATE);
     //cfsetospeed(&tio,BAUD_RATE);
@@ -139,9 +141,9 @@ void serial_init()
 
     /* set intarval timer (10ms) */
     timer.it_value.tv_sec = 0;
-    timer.it_value.tv_usec = 20000;
+    timer.it_value.tv_usec = 14000;
     timer.it_interval.tv_sec = 0;
-    timer.it_interval.tv_usec = 20000;
+    timer.it_interval.tv_usec = 14000;
     if(setitimer(ITIMER_REAL, &timer, NULL) < 0){
         perror("setitimer error");
         exit(1);
@@ -150,6 +152,7 @@ void serial_init()
 #endif
 
     gfd = fd;
+    write(gfd, write_sbus_buffer, 25);
     //printf("gfd set finished\n");
 }
 
@@ -162,7 +165,10 @@ void sbus_hander(){
 
     // ここで受信待ち
     //len=read(gfd,buffer,BUFF_SIZE);
+
     len=read(gfd,buffer,getRxBuf(gfd));
+    //len = 0;
+
     if(len==0){
         // read()が0を返したら、end of file
         // 通常は正常終了するのだが今回は無限ループ
@@ -205,11 +211,20 @@ void sbus_hander(){
                 sbus_channels[5] = ((sbus_buffer[8 ]&0b11111111) << 1) | ((sbus_buffer[7 ]&0b10000000)>>7) | ((sbus_buffer[9]&0b00000011)<<9);
                 sbus_channels[6] = ((sbus_buffer[10]&0b00011111) << 6) | ((sbus_buffer[9 ]&0b11111100)>>2);
                 sbus_channels[7] = ((sbus_buffer[11]&0b11111111) << 3) | ((sbus_buffer[10]&0b11100000)>>5);
+/*
+                for(j=0; j<25; j++){
+                    printf("%x , ",sbus_buffer[j]);
+                }
+                printf("\n");
+                */
             }
 
             start_byte_flag = 1;
             sbus_bffer_cnt = 0;
             sbus_buffer[0] = buffer[i];
+
+            //printf("\n");
+
             /*
         }else if(buffer[i] == 0x00){
             sbus_channels[0] = ((sbus_buffer[2 ]&0b00000111) << 8) | sbus_buffer[1];
@@ -228,13 +243,13 @@ void sbus_hander(){
             sbus_bffer_cnt++;
             sbus_buffer[sbus_bffer_cnt] = buffer[i];
         }
-        //printf("%02X ",buffer[i]);
+        //printf("%x , ",sbus_buffer[i]);
     }
 
     //write sequence
-    
+   /* 
     write_sbus_buffer[0] = 0x0f;
-/*
+
     write_sbus_buffer[ 1] =   sbus_write_channels[0] & 0b00011111111;
     write_sbus_buffer[ 2] = ((sbus_write_channels[1] & 0b00000011111)<<3) | ((sbus_write_channels[0] & 0b11100000000)>>8);
     write_sbus_buffer[ 3] = ((sbus_write_channels[2] & 0b00000000011)<<6) | ((sbus_write_channels[1] & 0b11111100000)>>5);
@@ -247,11 +262,20 @@ void sbus_hander(){
     write_sbus_buffer[10] = ((sbus_write_channels[7] & 0b00000000111)<<5) | ((sbus_write_channels[6] & 0b11111000000)>>6);
     write_sbus_buffer[11] = ((sbus_write_channels[7] & 0b11111111000)>>3);
 */
+/*
     for(i=12; i<25; i++){
         write_sbus_buffer[i] = sbus_buffer[i];
     }
-    write(gfd, write_sbus_buffer, 25);
+*/
+    
 
+    write(gfd, write_sbus_buffer, 25);
+    /*
+    for(i=0;i<25;i++){
+        char send_one_buf = write_sbus_buffer[i];
+        write(gfd, &send_one_buf, 1);
+    }
+    */
     /*
     for(i=0; i<30; i++) printf("%02X . ",sbus_buffer[i]);
     printf("\n");
